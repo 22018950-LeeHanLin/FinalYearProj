@@ -49,7 +49,7 @@ pipeline {
             steps {
                 script {
                     git branch: 'main',
-                        credentialsId: '570f5130-98ad-4f82-ac6b-4ec94f041e3e', // Jenkins credentials ID
+                        credentialsId: '0ca8f70f-0dae-44d3-b15d-2d8ad577e89c', // Jenkins credentials ID
                         url: "${GIT_REPO}"
                     echo "Code checked out from the repository."
                 }
