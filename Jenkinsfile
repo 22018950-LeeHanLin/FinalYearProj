@@ -24,7 +24,7 @@ pipeline {
             steps {
                 script {
                     git branch: 'main',
-                        credentialsId: '0ca8f70f-0dae-44d3-b15d-2d8ad577e89c',
+                        credentialsId: '23332273-27f5-4ff2-b2b5-55529e322235',
                         url: "${GIT_REPO}"
                     echo "Code checked out from the repository."
                 }
