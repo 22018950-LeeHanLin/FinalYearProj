@@ -70,14 +70,17 @@ pipeline {
             }
         }
 
-        stage('Deploy Containers') {
+       stage('Deploy Containers') {
             when {
                 expression { env.DEPLOY_STATUS == 'good' }
             }
             steps {
                 script {
                     echo "Deploying production containers..."
-                    sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose.yml up -d"
+                    sh """
+                    set -e
+                    docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose.yml up -d
+                    """
                 }
             }
         }
