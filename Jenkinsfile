@@ -12,7 +12,7 @@ pipeline {
         GIT_CREDENTIALS = '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'
         GIT_USERNAME = 'githubadmin'
         LOG_FOLDER = 'pipeline-logs'
-        CONTAINER_FILES_PATH = '/home/fypuser/fyp/Jingyi/container-files' // Full path to container files
+        CONTAINER_FILES_PATH = '/var/lib/jenkins/workspace/container-files' // Full path to container files
     }
 
     triggers {
