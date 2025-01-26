@@ -9,23 +9,28 @@ pipeline {
         WEB_CONTAINER = 'apache-container'
         DB_CONTAINER = 'mysql-container'
         GIT_REPO = 'https://github.com/22018950-LeeHanLin/FinalYearProj.git'
-        GIT_CREDENTIALS = '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'
-        GIT_USERNAME = 'githubadmin'
         LOG_FOLDER = 'pipeline-logs'
         CONTAINER_FILES_PATH = '/var/lib/jenkins/workspace/container-files' // Full path to container files
     }
 
-    triggers {
-        pollSCM('* * * * *') // Polling every minute
-    }
-
     stages {
+        stage('Prepare Environment') {
+            steps {
+                script {
+                    sh "mkdir -p ${CONTAINER_FILES_PATH}"
+                    if (fileExists("${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run")) {
+                        echo "XAMPP installer already exists at ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run."
+                    } else {
+                        sh "wget https://sourceforge.net/projects/xampp/files/latest/download -O ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run"
+                    }
+                }
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 script {
-                    git branch: 'main',
-                        
-                        url: "${GIT_REPO}"
+                    git branch: 'main', url: "${GIT_REPO}"
                     echo "Code checked out from the repository."
                 }
             }
@@ -35,29 +40,22 @@ pipeline {
             parallel {
                 stage('Build Apache Image') {
                     steps {
-                        sh "docker build -t ${DOCKER_WEB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
-                        echo "Apache image built: ${DOCKER_WEB_IMAGE}"
+                        script {
+                            sh "docker build -t ${DOCKER_WEB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
+                            echo "Apache image built successfully."
+                        }
                     }
                 }
                 stage('Build MySQL Image') {
                     steps {
-                        sh "docker build -t ${DOCKER_DB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
-                        echo "MySQL image built: ${DOCKER_DB_IMAGE}"
+                        script {
+                            sh "docker build -t ${DOCKER_DB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
+                            echo "MySQL image built successfully."
+                        }
                     }
                 }
             }
         }
-
-        //stage('Run SonarQube Analysis') {
-            //steps {
-                //script {
-                    //withSonarQubeEnv('SonarQube') {
-                        //def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                       // sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.host.url=${SONAR_HOST}"
-                   // }
-               // }
-           // }
-      //  }
 
         stage('Gatekeeper Approval') {
             steps {
@@ -70,44 +68,31 @@ pipeline {
             }
         }
 
-       stage('Deploy Containers') {
+          stage('Deploy Containers') {
             when {
                 expression { env.DEPLOY_STATUS == 'good' }
             }
             steps {
                 script {
-                    echo "Deploying production containers..."
+                    echo "Cleaning up any conflicting networks..."
                     sh """
-                    set -e
+                    docker network ls | grep -q container-files_container_network && docker network rm container-files_container_network || echo 'No conflicting network to remove'
+                    docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose.yml down
                     docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose.yml up -d
                     """
                 }
             }
         }
 
+
         stage('Rollback') {
             when {
                 expression { env.DEPLOY_STATUS == 'bad' }
             }
             steps {
-                sh "${CONTAINER_FILES_PATH}/rollback.sh"
-                echo "Rollback executed."
-            }
-        }
-
-        stage('Log Results to GitHub') {
-            steps {
                 script {
-                    sh """
-                    mkdir -p ${LOG_FOLDER}
-                    echo 'Pipeline execution log' > ${LOG_FOLDER}/log.txt
-                    git config --global user.email "you@example.com"
-                    git config --global user.name "Your Name"
-                    git add ${LOG_FOLDER}
-                    git commit -m 'Pipeline logs updated'
-                    git push https://${GIT_USERNAME}:${GIT_CREDENTIALS}@${GIT_REPO}
-                    """
-                    echo "Logs uploaded to GitHub."
+                    echo "Rollback initiated."
+                    sh "${CONTAINER_FILES_PATH}/rollback.sh"
                 }
             }
         }
@@ -118,7 +103,7 @@ pipeline {
             echo 'Pipeline executed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Check logs in GitHub.'
+            echo 'Pipeline failed. Check logs for details.'
         }
     }
 }
