@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST = 'http://localhost:9000'
+        SONAR_HOST = 'http://127.0.0.1:9000'
         SONAR_PROJECT_KEY = 'jenkin'
         SONARQUBE_SERVER_NAME = 'sonarserver' // Ensure this matches Jenkins SonarQube installation
         DOCKER_WEB_IMAGE = 'apache-image'
