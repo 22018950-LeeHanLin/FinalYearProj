@@ -59,14 +59,14 @@ pipeline {
          stage('Run SonarQube Analysis') {
             steps {
                 script {
-                    withSonarQubeEnv('SonarQube') {
-                        def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.host.url=${SONAR_HOST}"
+                    def scannerHome = tool 'SonarScanner'; 
+                    withSonarQubeEnv('SonarQube') { 
+                        sh "${scannerHome}/bin/sonar-scanner"
                     }
+                    echo "SonarQube scan completed."
                 }
             }
         }
-
 
         stage('Gatekeeper Approval') {
             steps {
