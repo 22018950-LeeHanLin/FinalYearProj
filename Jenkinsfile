@@ -63,12 +63,15 @@ pipeline {
                 script {
                     def scannerHome = tool name: 'jenkin', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                     withSonarQubeEnv("${SONARQUBE_SERVER_NAME}") { 
-                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.host.url=${SONAR_HOST}"
-                    }
-                    echo "SonarQube scan completed."
-                }
+                         sh """
+                ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                -Dsonar.host.url=${SONAR_HOST} \
+                -Dsonar.verbose=true
+                """
             }
         }
+    }
+}
 
         stage('Gatekeeper Approval') {
             steps {
