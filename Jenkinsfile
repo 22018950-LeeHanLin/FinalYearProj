@@ -4,7 +4,7 @@ pipeline {
     environment {
         SONAR_HOST = 'http://localhost:9000'
         SONAR_PROJECT_KEY = 'jenkin'
-        SONARQUBE_SERVER_NAME = 'sonarsever' // Ensure this matches Jenkins SonarQube installation
+        SONARQUBE_SERVER_NAME = 'sonarserver' // Ensure this matches Jenkins SonarQube installation
         DOCKER_WEB_IMAGE = 'apache-image'
         DOCKER_DB_IMAGE = 'mysql-image'
         WEB_CONTAINER = 'apache-container'
