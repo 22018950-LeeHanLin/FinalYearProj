@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONAR_HOST = 'http://localhost:9000'
-        SONAR_PROJECT_KEY = 'sqp_fe45847de58fb2e8846cd4675ae89a2c39f8d138'
+        SONAR_PROJECT_KEY = 'jenkin'
         DOCKER_WEB_IMAGE = 'apache-image'
         DOCKER_DB_IMAGE = 'mysql-image'
         WEB_CONTAINER = 'apache-container'
