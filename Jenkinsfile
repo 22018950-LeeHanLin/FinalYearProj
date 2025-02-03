@@ -4,14 +4,14 @@ pipeline {
     environment {
         SONAR_HOST = 'http://localhost:9000'
         SONAR_PROJECT_KEY = 'jenkin'
-        SONARQUBE_SERVER_NAME = 'sonarserver'
+        SONARQUBE_SERVER_NAME = 'SonarQube' // Ensure this matches Jenkins SonarQube installation
         DOCKER_WEB_IMAGE = 'apache-image'
         DOCKER_DB_IMAGE = 'mysql-image'
         WEB_CONTAINER = 'apache-container'
         DB_CONTAINER = 'mysql-container'
         GIT_REPO = 'https://github.com/22018950-LeeHanLin/FinalYearProj.git'
         LOG_FOLDER = 'pipeline-logs'
-        CONTAINER_FILES_PATH = '/var/lib/jenkins/workspace/container-files' // Full path to container files
+        CONTAINER_FILES_PATH = '/var/lib/jenkins/workspace/container-files'
     }
 
     stages {
@@ -20,7 +20,7 @@ pipeline {
                 script {
                     sh "mkdir -p ${CONTAINER_FILES_PATH}"
                     if (fileExists("${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run")) {
-                        echo "XAMPP installer already exists at ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run."
+                        echo "XAMPP installer already exists."
                     } else {
                         sh "wget https://sourceforge.net/projects/xampp/files/latest/download -O ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run"
                     }
@@ -57,10 +57,11 @@ pipeline {
                 }
             }
         }
-         stage('Run SonarQube Analysis') {
+
+        stage('Run SonarQube Analysis') {
             steps {
                 script {
-                    def scannerHome = tool name: 'jenkin', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+                    def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
                     withSonarQubeEnv("${SONARQUBE_SERVER_NAME}") { 
                         sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.host.url=${SONAR_HOST}"
                     }
@@ -80,22 +81,26 @@ pipeline {
             }
         }
 
-          stage('Deploy Containers') {
+        stage('Deploy Containers') {
             when {
                 expression { env.DEPLOY_STATUS == 'good' }
             }
             steps {
                 script {
-                    echo "Cleaning up any conflicting networks..."
+                    echo "Stopping and removing any existing containers to avoid conflicts..."
                     sh """
-                    docker network ls | grep -q container-files_container_network && docker network rm container-files_container_network || echo 'No conflicting network to remove'
-                    docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose.yml down
+                    docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} || echo 'No existing Apache container found'
+                    docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
+                    """
+
+                    echo "Deploying containers..."
+                    sh """
+                    docker network ls | grep -q container-files_container_network || docker network create container-files_container_network
                     docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose.yml up -d
                     """
                 }
             }
         }
-
 
         stage('Rollback') {
             when {
@@ -105,6 +110,8 @@ pipeline {
                 script {
                     echo "Rollback initiated."
                     sh "${CONTAINER_FILES_PATH}/rollback.sh"
+                    echo "Performing website availability check..."
+                    sh "curl -Is http://localhost:8081 | head -n 1"
                 }
             }
         }
