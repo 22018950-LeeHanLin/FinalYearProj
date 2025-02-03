@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONAR_HOST = 'http://localhost:9000'
-        SONAR_PROJECT_KEY = 'FYPtesting'
+        SONAR_PROJECT_KEY = 'sqp_fe45847de58fb2e8846cd4675ae89a2c39f8d138'
         DOCKER_WEB_IMAGE = 'apache-image'
         DOCKER_DB_IMAGE = 'mysql-image'
         WEB_CONTAINER = 'apache-container'
@@ -56,6 +56,17 @@ pipeline {
                 }
             }
         }
+         stage('Run SonarQube Analysis') {
+            steps {
+                script {
+                    withSonarQubeEnv('SonarQube') {
+                        def scannerHome = tool name: 'SonarScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.host.url=${SONAR_HOST}"
+                    }
+                }
+            }
+        }
+
 
         stage('Gatekeeper Approval') {
             steps {
