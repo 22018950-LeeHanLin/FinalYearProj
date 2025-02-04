@@ -98,7 +98,7 @@ pipeline {
 
                     echo "Deploying containers..."
                     sh """
-                    docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose.yml1 up -d
+                    docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d
                     """
                 }
             }
