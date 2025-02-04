@@ -11,7 +11,7 @@ pipeline {
         DB_CONTAINER = 'mysql-container'
         GIT_REPO = 'https://github.com/22018950-LeeHanLin/FinalYearProj.git'
         LOG_FOLDER = 'pipeline-logs'
-        CONTAINER_FILES_PATH = '/var/lib/jenkins/workspace/container-files'
+        CONTAINER_FILES_PATH = '/fyp/jingyi/container-files'
     }
 
     stages {
