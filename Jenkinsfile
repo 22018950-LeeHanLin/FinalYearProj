@@ -43,7 +43,7 @@ pipeline {
                 stage('Build Apache Image') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_WEB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.web ."
+                            sh "docker build -t ${DOCKER_WEB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
                             echo "Apache image built successfully."
                         }
                     }
@@ -51,7 +51,7 @@ pipeline {
                 stage('Build MySQL Image') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_DB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.db ."
+                            sh "docker build -t ${DOCKER_DB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
                             echo "MySQL image built successfully."
                         }
                     }
