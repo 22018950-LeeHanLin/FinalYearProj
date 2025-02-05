@@ -15,18 +15,19 @@ pipeline {
     }
 
     stages {
-        stage('Prepare Environment') {
-            steps {
-                script {
-                    sh "mkdir -p ${CONTAINER_FILES_PATH}"
-                    if (fileExists("${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run")) {
-                        echo "XAMPP installer already exists."
-                    } else {
-                        sh "wget https://sourceforge.net/projects/xampp/files/latest/download -O ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run"
-                    }
-                }
+       stage('Prepare Environment') {
+    steps {
+        script {
+            sh "mkdir -p ${CONTAINER_FILES_PATH}"
+            if (fileExists("${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run")) {
+                echo "XAMPP installer already exists."
+            } else {
+                sh "wget --no-check-certificate https://sourceforge.net/projects/xampp/files/latest/download -O ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run"
             }
         }
+    }
+}
+
 
         stage('Checkout Code') {
             steps {
