@@ -11,7 +11,7 @@ pipeline {
         DB_CONTAINER = 'mysql-container'
         GIT_REPO = 'https://github.com/22018950-LeeHanLin/FinalYearProj.git'
         LOG_FOLDER = 'pipeline-logs'
-        CONTAINER_FILES_PATH = '/var/lib/jenkins/workspace/container-files'
+        CONTAINER_FILES_PATH = '/home/fypuser/fyp/Jingyi/container-files'
     }
 
     stages {
@@ -97,10 +97,10 @@ pipeline {
                     """
 
                     echo "Deploying containers..."
-                    sh """
-                    docker network ls | grep -q container-files_container_network || docker network create container-files_container_network
-                    docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose.yml up -d
+                   sh """
+                    docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d
                     """
+
                 }
             }
         }
