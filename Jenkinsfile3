@@ -4,7 +4,7 @@ pipeline {
     environment {
         SONAR_HOST = 'http://127.0.0.1:9000'
         SONAR_PROJECT_KEY = 'jenkin'
-        SONARQUBE_SERVER_NAME = 'sonarserver' // Ensure this matches Jenkins SonarQube installation
+        SONARQUBE_SERVER_NAME = 'sonarserver'
         DOCKER_WEB_IMAGE = 'apache-image'
         DOCKER_DB_IMAGE = 'mysql-image'
         WEB_CONTAINER = 'apache-container'
@@ -18,13 +18,19 @@ pipeline {
         stage('Prepare Environment') {
             steps {
                 script {
-                    sh "mkdir -p ${CONTAINER_FILES_PATH}"
-                    sh "chown -R jenkins:jenkins ${CONTAINER_FILES_PATH}" // Ensure Jenkins owns the directory
+                    // Ensure the container files directory exists and is writable
+                    sh "sudo mkdir -p ${CONTAINER_FILES_PATH}"
+                    sh "sudo chown -R jenkins:jenkins ${CONTAINER_FILES_PATH}"
 
+                    // Check and download XAMPP for Linux
                     if (fileExists("${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run")) {
                         echo "XAMPP installer already exists."
                     } else {
-                        sh "wget https://sourceforge.net/projects/xampp/files/latest/download -O ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run"
+                        sh """
+                        wget https://www.apachefriends.org/xampp-files/8.2.12/xampp-linux-x64-8.2.12-0-installer.run \
+                        -O ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run --no-check-certificate
+                        chmod +x ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run
+                        """
                     }
                 }
             }
@@ -33,8 +39,11 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 script {
-                    git branch: 'main', url: "${GIT_REPO}"
-                    echo "Code checked out from the repository."
+                    // Ensure the folder is clean before cloning
+                    sh "sudo rm -rf ${CONTAINER_FILES_PATH}"
+                    sh "git clone ${GIT_REPO} ${CONTAINER_FILES_PATH}"
+                    sh "sudo chown -R jenkins:jenkins ${CONTAINER_FILES_PATH}"
+                    echo "Code checked out successfully."
                 }
             }
         }
@@ -92,17 +101,20 @@ pipeline {
             }
             steps {
                 script {
-                    echo "Stopping and removing any existing containers to avoid conflicts..."
+                    echo "Stopping and removing any existing containers..."
                     sh """
                     docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} || echo 'No existing Apache container found'
                     docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
                     """
 
-                    echo "Deploying containers..."
+                    echo "Ensuring Docker network exists..."
                     sh """
-                    docker network create container-files_container_network || echo 'Network already exists'
-                    docker-compose -f ${DOCKER_COMPOSE_FILE} up -d
+                    docker network inspect container-files_container_network > /dev/null 2>&1 || \
+                    docker network create --subnet=192.168.1.0/24 container-files_container_network
                     """
+
+                    echo "Deploying containers..."
+                    sh "docker-compose -f ${DOCKER_COMPOSE_FILE} up -d"
                 }
             }
         }
@@ -115,8 +127,8 @@ pipeline {
                 script {
                     echo "Rollback initiated."
                     sh "${CONTAINER_FILES_PATH}/rollback.sh"
-                    echo "Performing website availability check..."
-                    sh "curl -Is http://localhost:8081 | head -n 1 || echo 'Website not reachable, rollback needed!'"
+                    echo "Checking if website is running..."
+                    sh "curl -Is http://localhost:8081 | head -n 1 || echo 'Website not reachable, rollback required!'"
                 }
             }
         }
