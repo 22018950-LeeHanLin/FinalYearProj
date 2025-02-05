@@ -77,7 +77,7 @@ pipeline {
             steps {
                 script {
                     def deployStatus = input message: 'Proceed to deploy or rollback?', ok: 'Proceed', parameters: [
-                        choice(name: 'DEPLOY_STATUS', choices: ['good', 'bad'], description: 'Deployment Status')
+                        choice(name: 'DEPLOY_STATUS', choices: ['Proceed to delpoy', 'Rollback'], description: 'Deployment Status')
                     ]
                     env.DEPLOY_STATUS = deployStatus
                 }
@@ -86,7 +86,7 @@ pipeline {
 
         stage('Deploy Containers') {
             when {
-                expression { env.DEPLOY_STATUS == 'good' }
+                expression { env.DEPLOY_STATUS == 'Proceed to delpoy' }
             }
             steps {
                 script {
@@ -107,7 +107,7 @@ pipeline {
 
         stage('Rollback') {
             when {
-                expression { env.DEPLOY_STATUS == 'bad' }
+                expression { env.DEPLOY_STATUS == 'Rollback' }
             }
             steps {
                 script {
