@@ -66,7 +66,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    def scannerHome = tool 'Fyp'
+                    def scannerHome = tool 'jenkin'
                     withSonarQubeEnv("${SONARQUBE_SERVER_NAME}") {
                         sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.host.url=${SONAR_HOST}"
                     }
