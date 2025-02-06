@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONAR_HOST = 'http://127.0.0.1:9000'
-        SONAR_PROJECT_KEY = 'Fyp'
+        SONAR_PROJECT_KEY = 'jenkin'
         SONARQUBE_SERVER_NAME = 'sonarserver' // Ensure this matches Jenkins SonarQube installation
         DOCKER_WEB_IMAGE = 'apache-image'
         DOCKER_DB_IMAGE = 'mysql-image'
@@ -69,7 +69,7 @@ pipeline {
             withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                 sh """
                     /opt/sonar-scanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=Fyp \
+                    -Dsonar.projectKey=jenkin \
                     -Dsonar.host.url=http://127.0.0.1:9000 \
                     -Dsonar.login=$SONAR_TOKEN
                 """
