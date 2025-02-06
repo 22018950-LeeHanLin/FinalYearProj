@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONAR_HOST = 'http://127.0.0.1:9000'
-        SONAR_PROJECT_KEY = 'FinalyearProj'
+        SONAR_PROJECT_KEY = 'Fyp'
         SONARQUBE_SERVER_NAME = 'sonarserver' // Ensure this matches Jenkins SonarQube installation
         DOCKER_WEB_IMAGE = 'apache-image'
         DOCKER_DB_IMAGE = 'mysql-image'
@@ -59,19 +59,16 @@ pipeline {
             }
         }
 
-        stage('Run SonarQube Analysis') {
-            steps {
-                script {
-                    def scannerHome = tool name: 'jenkin', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                    withSonarQubeEnv("${SONARQUBE_SERVER_NAME}") { 
-                         sh """
-                ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                -Dsonar.host.url=${SONAR_HOST} \
-                -Dsonar.verbose=true
-                """
-            }
-        }
+       node {
+  stage('SCM') {
+    checkout scm
+  }
+  stage('SonarQube Analysis') {
+    def scannerHome = tool 'Fyp';
+    withSonarQubeEnv() {
+      sh "${scannerHome}/bin/sonar-scanner"
     }
+  }
 }
 
         stage('Gatekeeper Approval') {
