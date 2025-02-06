@@ -119,3 +119,5 @@ stage('SCM') {
             echo 'Pipeline failed. Check logs for details.'
         }
     }
+}
+}
