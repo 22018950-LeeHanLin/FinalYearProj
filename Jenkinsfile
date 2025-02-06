@@ -4,7 +4,7 @@ pipeline {
     environment {
         SONAR_HOST = 'http://127.0.0.1:9000'
         SONAR_PROJECT_KEY = 'jenkin'
-        SONARQUBE_SERVER_NAME = 'sonarserver' // Ensure this matches Jenkins SonarQube installation
+        SONARQUBE_SERVER_NAME = 'sonarserver'
         DOCKER_WEB_IMAGE = 'apache-image'
         DOCKER_DB_IMAGE = 'mysql-image'
         WEB_CONTAINER = 'apache-container'
@@ -36,7 +36,36 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarserver') {
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                        sh """
+                            /opt/sonar-scanner/bin/sonar-scanner \
+                            -Dsonar.projectKey=jenkin \
+                            -Dsonar.host.url=${SONAR_HOST} \
+                            -Dsonar.login=$SONAR_TOKEN
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Gatekeeper Approval') {
+            steps {
+                script {
+                    def deployStatus = input message: 'Proceed to Build and Test?', ok: 'Proceed', parameters: [
+                        choice(name: 'DEPLOY_STATUS', choices: ['Proceed to build', 'Rollback'], description: 'Deployment Status')
+                    ]
+                    env.DEPLOY_STATUS = deployStatus
+                }
+            }
+        }
+
         stage('Build and Test Containers') {
+            when {
+                expression { env.DEPLOY_STATUS == 'Proceed' }
+            }
             parallel {
                 stage('Build Apache Image') {
                     steps {
@@ -57,33 +86,23 @@ pipeline {
             }
         }
 
-        stage('SCM') {
-            steps {
-                checkout scm
-            }
-        }
-
-       stage('SonarQube Analysis') {
-    steps {
-        withSonarQubeEnv('sonarserver') {
-            withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                sh """
-                    /opt/sonar-scanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=jenkin \
-                    -Dsonar.host.url=http://127.0.0.1:9000 \
-                    -Dsonar.login=$SONAR_TOKEN
-                """
-            }
-        }
-    }
-}
-
-
-        stage('Gatekeeper Approval') {
+        stage('CURL Test') {
             steps {
                 script {
-                    def deployStatus = input message: 'Proceed to deploy or rollback?', ok: 'Proceed', parameters: [
-                        choice(name: 'DEPLOY_STATUS', choices: ['Proceed to deploy', 'Rollback'], description: 'Deployment Status')
+                    def response = sh(script: "curl -Is http://localhost:8081/index2.php | head -n 1", returnStdout: true).trim()
+                    echo "CURL Response: ${response}"
+                    if (!response.contains('200 OK')) {
+                        error("CURL test failed")
+                    }
+                }
+            }
+        }
+
+        stage('Gatekeeper Approval for Deployment') {
+            steps {
+                script {
+                    def deployStatus = input message: 'Proceed to Deploy Production Environment?', ok: 'Proceed', parameters: [
+                        choice(name: 'DEPLOY_STATUS', choices: ['Deploy', 'Rollback'], description: 'Deployment Status')
                     ]
                     env.DEPLOY_STATUS = deployStatus
                 }
@@ -92,7 +111,7 @@ pipeline {
 
         stage('Deploy Containers') {
             when {
-                expression { env.DEPLOY_STATUS == 'Proceed to deploy' }
+                expression { env.DEPLOY_STATUS == 'Deploy' }
             }
             steps {
                 script {
@@ -108,7 +127,34 @@ pipeline {
             }
         }
 
-        stage('Rollback') {
+        stage('Post Deployment CURL Test') {
+            steps {
+                script {
+                    def response = sh(script: "curl -Is http://localhost:8081/index2.php | head -n 1", returnStdout: true).trim()
+                    echo "Post Deployment CURL Response: ${response}"
+                    if (!response.contains('200 OK')) {
+                        env.CURL_TEST_FAILED = 'true'
+                    } else {
+                        env.CURL_TEST_FAILED = 'false'
+                    }
+                }
+            }
+        }
+
+        stage('Final Gatekeeper') {
+            steps {
+                script {
+                    if (env.CURL_TEST_FAILED == 'true') {
+                        def deployStatus = input message: 'CURL test failed. Rollback?', ok: 'Proceed', parameters: [
+                            choice(name: 'DEPLOY_STATUS', choices: ['Rollback', 'End'], description: 'Final Decision')
+                        ]
+                        env.DEPLOY_STATUS = deployStatus
+                    }
+                }
+            }
+        }
+
+        stage('Rollback if Needed') {
             when {
                 expression { env.DEPLOY_STATUS == 'Rollback' }
             }
@@ -117,7 +163,7 @@ pipeline {
                     echo "Rollback initiated."
                     sh "${CONTAINER_FILES_PATH}/rollback.sh"
                     echo "Performing website availability check..."
-                    sh "curl -Is http://localhost:8081 | head -n 1"
+                    sh "curl -Ishttp://localhost:8081/index2.php | head -n 1"
                 }
             }
         }
