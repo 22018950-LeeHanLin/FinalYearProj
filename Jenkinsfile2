@@ -56,23 +56,16 @@ pipeline {
                 }
             }
         }
-
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    def scannerHome = tool name: 'Fyp', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                    withSonarQubeEnv("${SONARQUBE_SERVER_NAME}") {
-                        sh """
-                        ${scannerHome}/bin/sonar-scanner \
-                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                        -Dsonar.host.url=${SONAR_HOST} \
-                        -Dsonar.sources=. \
-                        -Dsonar.verbose=true
-                        """
-                    }
-                }
-            }
-        }
+stage('SCM') {
+    checkout scm
+  }
+  stage('SonarQube Analysis') {
+    def scannerHome = tool 'Fyp';
+    withSonarQubeEnv() {
+      sh "${scannerHome}/bin/sonar-scanner"
+    }
+  }
+}
 
         stage('Gatekeeper Approval') {
             steps {
