@@ -68,7 +68,7 @@ pipeline {
         withSonarQubeEnv('sonarserver') {
             withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                 sh """
-                    sonar-scanner \
+                    /opt/sonar-scanner/bin/sonar-scanner \
                     -Dsonar.projectKey=Fyp \
                     -Dsonar.host.url=http://127.0.0.1:9000 \
                     -Dsonar.login=$SONAR_TOKEN
