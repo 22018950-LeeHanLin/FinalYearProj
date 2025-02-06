@@ -11,22 +11,23 @@ pipeline {
         DB_CONTAINER = 'mysql-container'
         GIT_REPO = 'https://github.com/22018950-LeeHanLin/FinalYearProj.git'
         LOG_FOLDER = 'pipeline-logs'
-        CONTAINER_FILES_PATH = '/var/lib/jenkins/workspace/container-files'
+        CONTAINER_FILES_PATH = '/home/fypuser/fyp/Jingyi/container-files'
     }
 
     stages {
-        stage('Prepare Environment') {
-            steps {
-                script {
-                    sh "mkdir -p ${CONTAINER_FILES_PATH}"
-                    if (fileExists("${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run")) {
-                        echo "XAMPP installer already exists."
-                    } else {
-                        sh "wget https://sourceforge.net/projects/xampp/files/latest/download -O ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run"
-                    }
-                }
+       stage('Prepare Environment') {
+    steps {
+        script {
+            sh "mkdir -p ${CONTAINER_FILES_PATH}"
+            if (fileExists("${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run")) {
+                echo "XAMPP installer already exists."
+            } else {
+                sh "wget --no-check-certificate https://sourceforge.net/projects/xampp/files/latest/download -O ${CONTAINER_FILES_PATH}/xampp-linux-x64-8.2.12-0-installer.run"
             }
         }
+    }
+}
+
 
         stage('Checkout Code') {
             steps {
@@ -77,7 +78,7 @@ pipeline {
             steps {
                 script {
                     def deployStatus = input message: 'Proceed to deploy or rollback?', ok: 'Proceed', parameters: [
-                        choice(name: 'DEPLOY_STATUS', choices: ['good', 'bad'], description: 'Deployment Status')
+                        choice(name: 'DEPLOY_STATUS', choices: ['Proceed to delpoy', 'Rollback'], description: 'Deployment Status')
                     ]
                     env.DEPLOY_STATUS = deployStatus
                 }
@@ -86,7 +87,7 @@ pipeline {
 
         stage('Deploy Containers') {
             when {
-                expression { env.DEPLOY_STATUS == 'good' }
+                expression { env.DEPLOY_STATUS == 'Proceed to delpoy' }
             }
             steps {
                 script {
@@ -97,16 +98,17 @@ pipeline {
                     """
 
                     echo "Deploying containers..."
-                    sh """
+                   sh """
                     docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d
                     """
+
                 }
             }
         }
 
         stage('Rollback') {
             when {
-                expression { env.DEPLOY_STATUS == 'bad' }
+                expression { env.DEPLOY_STATUS == 'Rollback' }
             }
             steps {
                 script {
