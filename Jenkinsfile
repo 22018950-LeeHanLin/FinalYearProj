@@ -55,7 +55,7 @@ pipeline {
             steps {
                 script {
                     def deployStatus = input message: 'Proceed to Build and Test?', ok: 'Proceed', parameters: [
-                        choice(name: 'DEPLOY_STATUS', choices: ['Proceed', 'Abort'], description: 'Deployment Status')
+                        choice(name: 'DEPLOY_STATUS', choices: ['Proceed to Build', 'Rollback'], description: 'Deployment Status')
                     ]
                     env.DEPLOY_STATUS = deployStatus
                 }
@@ -64,7 +64,7 @@ pipeline {
 
         stage('Build and Test Containers') {
             when {
-                expression { env.DEPLOY_STATUS == 'Proceed' }
+                expression { env.DEPLOY_STATUS == 'Proceed to Build' }
             }
             parallel {
                 stage('Build Apache Image') {
@@ -102,7 +102,7 @@ pipeline {
             steps {
                 script {
                     def deployStatus = input message: 'Proceed to Deploy Production Environment?', ok: 'Proceed', parameters: [
-                        choice(name: 'DEPLOY_STATUS', choices: ['Deploy', 'Abort'], description: 'Deployment Status')
+                        choice(name: 'DEPLOY_STATUS', choices: ['Deploy', 'Rollback'], description: 'Deployment Status')
                     ]
                     env.DEPLOY_STATUS = deployStatus
                 }
