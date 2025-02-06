@@ -63,16 +63,21 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    def scannerHome = tool 'jenkin'
-                    withSonarQubeEnv("${SONARQUBE_SERVER_NAME}") {
-                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.host.url=${SONAR_HOST}"
-                    }
-                }
+       stage('SonarQube Analysis') {
+    steps {
+        withSonarQubeEnv('sonarserver') {
+            withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                sh """
+                    sonar-scanner \
+                    -Dsonar.projectKey=Fyp \
+                    -Dsonar.host.url=http://127.0.0.1:9000 \
+                    -Dsonar.login=$SONAR_TOKEN
+                """
             }
         }
+    }
+}
+
 
         stage('Gatekeeper Approval') {
             steps {
