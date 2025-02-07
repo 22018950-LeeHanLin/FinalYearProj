@@ -117,8 +117,8 @@ pipeline {
                 script {
                     echo "Stopping and removing any existing containers to avoid conflicts..."
                     sh """
-                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} || echo 'No existing Apache container found'
-                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
+                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} | echo 'No existing Apache container found'
+                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} | echo 'No existing MySQL container found'
                     """
 
                     echo "Deploying containers..."
