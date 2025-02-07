@@ -90,7 +90,7 @@ pipeline {
             when {
                 expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
             }
-             steps {
+            steps {
                 script {
                     echo "Stopping and removing any existing containers to avoid conflicts..."
                     sh """
@@ -104,7 +104,6 @@ pipeline {
             }
         }
 
-
         stage('Rollback for UAT') {
             when {
                 expression { env.UAT_DEPLOY_STATUS == 'Rollback' }
@@ -113,6 +112,7 @@ pipeline {
                 script {
                     echo "Rollback initiated for UAT."
                     sh "${CONTAINER_FILES_PATH}/rollback.sh"
+                    error("Pipeline terminated after UAT rollback.")
                 }
             }
         }
@@ -171,7 +171,7 @@ pipeline {
             when {
                 expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
             }
-             steps {
+            steps {
                 script {
                     echo "Stopping and removing any existing containers to avoid conflicts..."
                     sh """
@@ -185,7 +185,6 @@ pipeline {
             }
         }
 
-
         stage('Rollback for Production') {
             when {
                 expression { env.PROD_DEPLOY_STATUS == 'Rollback' }
@@ -194,6 +193,7 @@ pipeline {
                 script {
                     echo "Rollback initiated for Production."
                     sh "${CONTAINER_FILES_PATH}/rollback.sh"
+                    error("Pipeline terminated after Production rollback.")
                 }
             }
         }
@@ -217,6 +217,7 @@ pipeline {
                 script {
                     echo "Rollback initiated."
                     sh "${CONTAINER_FILES_PATH}/rollback.sh"
+                    error("Pipeline terminated after final rollback.")
                 }
             }
         }
