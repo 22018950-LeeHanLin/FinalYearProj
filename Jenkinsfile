@@ -210,7 +210,7 @@ pipeline {
                     }
                 }
             }
-        
+        }
 
         stage('Final Gatekeeper') {
             steps {
