@@ -7,8 +7,6 @@ pipeline {
         SONARQUBE_SERVER_NAME = 'sonarserver'
         DOCKER_WEB_IMAGE = 'apache-image'
         DOCKER_DB_IMAGE = 'mysql-image'
-        WEB_CONTAINER = 'apache-container'
-        DB_CONTAINER = 'mysql-container'
         GIT_REPO = 'https://github.com/22018950-LeeHanLin/FinalYearProj.git'
         CONTAINER_FILES_PATH = '/home/fypuser/fyp/Jingyi/container-files'
     }
@@ -51,116 +49,81 @@ pipeline {
             }
         }
 
-        stage('Gatekeeper Approval') {
+        stage('Gatekeeper for UAT Deployment') {
             steps {
                 script {
-                    def deployStatus = input message: 'Proceed to Build and Test?', ok: 'Proceed', parameters: [
-                        choice(name: 'DEPLOY_STATUS', choices: ['Proceed to Build', 'Rollback'], description: 'Deployment Status')
+                    def deployStatus = input message: 'Proceed to UAT Build and Test?', ok: 'Proceed', parameters: [
+                        choice(name: 'DEPLOY_STATUS', choices: ['Proceed to UAT', 'Rollback'], description: 'Deployment Status')
                     ]
                     env.DEPLOY_STATUS = deployStatus
                 }
             }
         }
- stage('UAT Environment to Build and test Containers and Images') {
+
+        stage('Build and Test in UAT') {
             when {
-                expression { env.DEPLOY_STATUS == 'Proceed to Build' }
+                expression { env.DEPLOY_STATUS == 'Proceed to UAT' }
             }
             parallel {
-                stage('Build Apache Image') {
+                stage('Build Apache Image for UAT') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_WEB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
-                            echo "Apache image built successfully."
+                            sh "docker build -t ${DOCKER_WEB_IMAGE}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
+                            echo "Apache UAT image built successfully."
                         }
                     }
                 }
-                stage('Build MySQL Image') {
+                stage('Build MySQL Image for UAT') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_DB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
-                            echo "MySQL image built successfully."
+                            sh "docker build -t ${DOCKER_DB_IMAGE}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
+                            echo "MySQL UAT image built successfully."
                         }
                     }
                 }
             }
         }
 
-        stage('Deploy Containers') {
-            steps {
-                script {
-                    echo "Stopping and removing any existing containers to avoid conflicts..."
-                    sh """
-                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} | echo 'No existing Apache container found'
-                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} | echo 'No existing MySQL container found'
-                    """
-
-                    echo "Deploying containers..."
-                    sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d"
-                }
-            }
-        }
-        stage('CURL Test') {
+        stage('UAT CURL Test') {
             steps {
                 script {
                     def response = sh(script: "curl -Is http://localhost:8081/index2.php | head -n 1", returnStdout: true).trim()
-                    echo "CURL Response: ${response}"
+                    echo "UAT CURL Response: ${response}"
                     if (!response.contains('200 OK')) {
-                        error("CURL test failed")
+                        error("UAT CURL test failed")
                     }
                 }
             }
         }
-  stage('Gatekeeper Approval for Deployment') {
+
+        stage('Gatekeeper for Production Deployment') {
             steps {
                 script {
-                    def deployStatus = input message: 'Proceed to Deploy Production Environment?', ok: 'Proceed', parameters: [
-                        choice(name: 'DEPLOY_STATUS', choices: ['Deploy', 'Rollback'], description: 'Deployment Status')
+                    def deployStatus = input message: 'Proceed to Deploy to Production?', ok: 'Proceed', parameters: [
+                        choice(name: 'DEPLOY_STATUS', choices: ['Deploy to Production', 'Rollback'], description: 'Deployment Status')
                     ]
                     env.DEPLOY_STATUS = deployStatus
                 }
             }
         }
-        stage('Build the Production Environment') {
-            parallel {
-                stage('Build Apache Image') {
-                    steps {
-                        script {
-                            sh "docker build -t ${DOCKER_WEB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
-                            echo "Apache image built successfully."
-                        }
-                    }
-                }
-                stage('Build MySQL Image') {
-                    steps {
-                        script {
-                            sh "docker build -t ${DOCKER_DB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
-                            echo "MySQL image built successfully."
-                        }
-                    }
-                }
-            }
-        }
 
-        stage('Deploy Containers') {
+        stage('Deploy to Production') {
+            when {
+                expression { env.DEPLOY_STATUS == 'Deploy to Production' }
+            }
             steps {
                 script {
-                    echo "Stopping and removing any existing containers to avoid conflicts..."
-                    sh """
-                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} | echo 'No existing Apache container found'
-                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} | echo 'No existing MySQL container found'
-                    """
-
-                    echo "Deploying containers..."
+                    echo "Deploying to Production..."
                     sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d"
                 }
             }
         }
 
-        stage('Post Deployment CURL Test') {
+        stage('Post-Production CURL Test') {
             steps {
                 script {
                     def response = sh(script: "curl -Is http://localhost:8081/index2.php | head -n 1", returnStdout: true).trim()
-                    echo "Post Deployment CURL Response: ${response}"
+                    echo "Post-Production CURL Response: ${response}"
                     if (!response.contains('200 OK')) {
                         env.CURL_TEST_FAILED = 'true'
                     } else {
@@ -173,12 +136,10 @@ pipeline {
         stage('Final Gatekeeper') {
             steps {
                 script {
-                    if (env.CURL_TEST_FAILED == 'true') {
-                        def deployStatus = input message: 'CURL test failed. Rollback?', ok: 'Proceed', parameters: [
-                            choice(name: 'DEPLOY_STATUS', choices: ['Rollback', 'End'], description: 'Final Decision')
-                        ]
-                        env.DEPLOY_STATUS = deployStatus
-                    }
+                    def deployStatus = input message: 'Do you want to rollback or end the deployment?', ok: 'Proceed', parameters: [
+                        choice(name: 'DEPLOY_STATUS', choices: ['Rollback', 'End'], description: 'Final Decision')
+                    ]
+                    env.DEPLOY_STATUS = deployStatus
                 }
             }
         }
@@ -191,8 +152,8 @@ pipeline {
                 script {
                     echo "Rollback initiated."
                     sh "${CONTAINER_FILES_PATH}/rollback.sh"
-                    echo "Performing website availability check..."
-                    sh "curl -Ishttp://localhost:8081/index2.php | head -n 1"
+                    echo "Verifying rollback with CURL..."
+                    sh "curl -Is http://localhost:8081/index2.php | head -n 1"
                 }
             }
         }
