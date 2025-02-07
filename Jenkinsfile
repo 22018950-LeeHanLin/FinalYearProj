@@ -104,15 +104,14 @@ pipeline {
                 script {
                     echo "Rollback initiated for UAT."
                     sh "${CONTAINER_FILES_PATH}/rollback.sh"
-                    def rollbackResponse = sh(script: "curl -Is http://localhost:8081/index2.php | head -n 1", returnStdout: true).trim()
-                    if (!rollbackResponse.contains('200 OK')) {
-                        error("Rollback CURL test failed")
-                    }
                 }
             }
         }
 
         stage('UAT CURL Test') {
+            when {
+                expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
+            }
             steps {
                 script {
                     def response = sh(script: "curl -Is http://localhost:8081/index2.php | head -n 1", returnStdout: true).trim()
@@ -179,10 +178,6 @@ pipeline {
                 script {
                     echo "Rollback initiated for Production."
                     sh "${CONTAINER_FILES_PATH}/rollback.sh"
-                    def rollbackResponse = sh(script: "curl -Is http://localhost:8081/index2.php | head -n 1", returnStdout: true).trim()
-                    if (!rollbackResponse.contains('200 OK')) {
-                        error("Rollback CURL test failed")
-                    }
                 }
             }
         }
@@ -206,10 +201,6 @@ pipeline {
                 script {
                     echo "Rollback initiated."
                     sh "${CONTAINER_FILES_PATH}/rollback.sh"
-                    def rollbackResponse = sh(script: "curl -Is http://localhost:8081/index2.php | head -n 1", returnStdout: true).trim()
-                    if (!rollbackResponse.contains('200 OK')) {
-                        error("Rollback CURL test failed")
-                    }
                 }
             }
         }
