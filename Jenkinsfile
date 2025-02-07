@@ -88,13 +88,20 @@ pipeline {
             when {
                 expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
             }
-            steps {
+             steps {
                 script {
-                    echo "Deploying containers to UAT..."
+                    echo "Stopping and removing any existing containers to avoid conflicts..."
+                    sh """
+                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} || echo 'No existing Apache container found'
+                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
+                    """
+
+                    echo "Deploying containers..."
                     sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d"
                 }
             }
         }
+
 
         stage('Rollback for UAT') {
             when {
@@ -162,13 +169,20 @@ pipeline {
             when {
                 expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
             }
-            steps {
+             steps {
                 script {
-                    echo "Deploying containers to Production..."
+                    echo "Stopping and removing any existing containers to avoid conflicts..."
+                    sh """
+                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} || echo 'No existing Apache container found'
+                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
+                    """
+
+                    echo "Deploying containers..."
                     sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d"
                 }
             }
         }
+
 
         stage('Rollback for Production') {
             when {
