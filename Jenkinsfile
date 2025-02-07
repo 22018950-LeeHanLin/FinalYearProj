@@ -83,6 +83,20 @@ pipeline {
                 }
             }
         }
+        stage('Deploy to UAT') {
+            steps {
+                script {
+                    echo "Stopping and removing any existing containers to avoid conflicts..."
+                    sh """
+                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} || echo 'No existing Apache container found'
+                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
+                    """
+
+                    echo "Deploying containers..."
+                    sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d"
+                }
+            }
+        }
 
         stage('UAT CURL Test') {
             steps {
@@ -106,18 +120,45 @@ pipeline {
                 }
             }
         }
-
-        stage('Deploy to Production') {
+        stage('Build the Production Env') {
             when {
                 expression { env.DEPLOY_STATUS == 'Deploy to Production' }
             }
+            parallel {
+                stage('Build Apache Image for Production') {
+                    steps {
+                        script {
+                            sh "docker build -t ${DOCKER_WEB_IMAGE}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
+                            echo "Apache UAT image built successfully."
+                        }
+                    }
+                }
+                stage('Build MySQL Image for Production') {
+                    steps {
+                        script {
+                            sh "docker build -t ${DOCKER_DB_IMAGE}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
+                            echo "MySQL UAT image built successfully."
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
             steps {
                 script {
-                    echo "Deploying to Production..."
+                    echo "Stopping and removing any existing containers to avoid conflicts..."
+                    sh """
+                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} || echo 'No existing Apache container found'
+                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
+                    """
+
+                    echo "Deploying containers..."
                     sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d"
                 }
             }
         }
+
 
         stage('Post-Production CURL Test') {
             steps {
