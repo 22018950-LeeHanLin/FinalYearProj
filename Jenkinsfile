@@ -61,8 +61,7 @@ pipeline {
                 }
             }
         }
-
-        stage('Build and Test Containers') {
+ stage('UAT Environment to Build and test Containers and Images') {
             when {
                 expression { env.DEPLOY_STATUS == 'Proceed to Build' }
             }
@@ -86,6 +85,20 @@ pipeline {
             }
         }
 
+        stage('Deploy Containers') {
+            steps {
+                script {
+                    echo "Stopping and removing any existing containers to avoid conflicts..."
+                    sh """
+                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} | echo 'No existing Apache container found'
+                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} | echo 'No existing MySQL container found'
+                    """
+
+                    echo "Deploying containers..."
+                    sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d"
+                }
+            }
+        }
         stage('CURL Test') {
             steps {
                 script {
@@ -97,8 +110,7 @@ pipeline {
                 }
             }
         }
-
-        stage('Gatekeeper Approval for Deployment') {
+  stage('Gatekeeper Approval for Deployment') {
             steps {
                 script {
                     def deployStatus = input message: 'Proceed to Deploy Production Environment?', ok: 'Proceed', parameters: [
@@ -108,11 +120,28 @@ pipeline {
                 }
             }
         }
+        stage('Build the Production Environment') {
+            parallel {
+                stage('Build Apache Image') {
+                    steps {
+                        script {
+                            sh "docker build -t ${DOCKER_WEB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
+                            echo "Apache image built successfully."
+                        }
+                    }
+                }
+                stage('Build MySQL Image') {
+                    steps {
+                        script {
+                            sh "docker build -t ${DOCKER_DB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
+                            echo "MySQL image built successfully."
+                        }
+                    }
+                }
+            }
+        }
 
         stage('Deploy Containers') {
-            when {
-                expression { env.DEPLOY_STATUS == 'Deploy' }
-            }
             steps {
                 script {
                     echo "Stopping and removing any existing containers to avoid conflicts..."
