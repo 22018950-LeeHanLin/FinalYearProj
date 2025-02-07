@@ -197,9 +197,9 @@ pipeline {
                 }
             }
         }
-        stage('UAT CURL Test') {
+        stage('PROD CURL Test') {
             when {
-                expression { env.UAT_DEPLOY_STATUS == 'Deploy to Production' }
+                expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
             }
             steps {
                 script {
@@ -210,7 +210,7 @@ pipeline {
                     }
                 }
             }
-        }
+        
 
         stage('Final Gatekeeper') {
             steps {
