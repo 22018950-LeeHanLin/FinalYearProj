@@ -197,6 +197,20 @@ pipeline {
                 }
             }
         }
+        stage('UAT CURL Test') {
+            when {
+                expression { env.UAT_DEPLOY_STATUS == 'Deploy to Production' }
+            }
+            steps {
+                script {
+                    def response = sh(script: "curl -Is http://localhost:8081/index2.php | head -n 1", returnStdout: true).trim()
+                    echo "UAT CURL Response: ${response}"
+                    if (!response.contains('200 OK')) {
+                        error("UAT CURL test failed")
+                    }
+                }
+            }
+        }
 
         stage('Final Gatekeeper') {
             steps {
