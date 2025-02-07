@@ -128,7 +128,7 @@ pipeline {
                 stage('Build Production Apache Image') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_WEB_IMAGE}:prod -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
+                            sh "docker build -t ${DOCKER_WEB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
                             echo "Production Apache image built successfully."
                         }
                     }
@@ -136,7 +136,7 @@ pipeline {
                 stage('Build Production MySQL Image') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_DB_IMAGE}:prod -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
+                            sh "docker build -t ${DOCKER_DB_IMAGE} -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
                             echo "Production MySQL image built successfully."
                         }
                     }
