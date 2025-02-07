@@ -148,13 +148,21 @@ pipeline {
             when {
                 expression { env.DEPLOY_STATUS == 'Deploy' }
             }
-            steps {
+             steps {
                 script {
-                    echo "Deploying Production Containers..."
+                    echo "Stopping and removing any existing containers to avoid conflicts..."
+                    sh """
+                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} || echo 'No existing Apache container found'
+                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
+                    """
+
+                    echo "Deploying containers..."
                     sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d"
                 }
             }
         }
+
+
 
         stage('Post-Deployment CURL Test') {
             steps {
