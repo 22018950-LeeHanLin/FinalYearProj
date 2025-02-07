@@ -7,6 +7,8 @@ pipeline {
         SONARQUBE_SERVER_NAME = 'sonarserver'
         DOCKER_WEB_IMAGE = 'apache-image'
         DOCKER_DB_IMAGE = 'mysql-image'
+        WEB_CONTAINER = 'apache-container'
+        DB_CONTAINER = 'mysql-container'
         GIT_REPO = 'https://github.com/22018950-LeeHanLin/FinalYearProj.git'
         CONTAINER_FILES_PATH = '/home/fypuser/fyp/Jingyi/container-files'
     }
