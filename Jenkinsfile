@@ -229,9 +229,9 @@ pipeline {
             steps {
                 script {
                     def response = sh(script: "curl -Is http://localhost:8082/ | head -n 1", returnStdout: true).trim()
-                   echo "UAT CURL Response: ${response}"
+                   echo "old PROD CURL Response: ${response}"
                     if (!response.contains('200 OK')) {
-                       error("UAT CURL test failed")
+                       error("old PROD CURL test failed")
                     }
                 }
             }
@@ -310,9 +310,9 @@ stage('Gatekeeper for new UAT Deployment') {
            steps {
              script {
                    def response = sh(script: "curl -Is http://localhost:8087/ | head -n 1", returnStdout: true).trim()
-                    echo "UAT CURL Response: ${response}"
+                    echo "new UAT CURL Response: ${response}"
                     if (!response.contains('200 OK')) {
-                        error("UAT CURL test failed")
+                        error("new UAT CURL test failed")
                    }
                 }
             }
@@ -384,16 +384,16 @@ stage('Gatekeeper for new UAT Deployment') {
                 }
             }
         }
-       stage('PROD CURL Test') {
+       stage('new PROD CURL Test') {
            when {
-                expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
+                expression { env.PROD_DEPLOY_STATUS == 'Deploy to new Production' }
            }
            steps {
                 script {
                     def response = sh(script: "curl -Is http://localhost:8088/ | head -n 1", returnStdout: true).trim()
-                   echo "UAT CURL Response: ${response}"
+                   echo "new PROD CURL Response: ${response}"
                     if (!response.contains('200 OK')) {
-                        error("UAT CURL test failed")
+                        error("new PROD CURL test failed")
                     }
                 }
             }
