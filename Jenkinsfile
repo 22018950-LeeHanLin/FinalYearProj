@@ -317,7 +317,7 @@ stage('Gatekeeper for UAT Deployment') {
                 stage('Build Apache New Image for Production') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_WEB_IMAGE_PPRD_NEW} -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-new.web ${CONTAINER_FILES_PATH}"
+                            sh "docker build -t ${DOCKER_WEB_IMAGE_PROD_NEW} -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-new.web ${CONTAINER_FILES_PATH}"
                             echo "Apache NEW Production image built successfully."
                         }
                     }
