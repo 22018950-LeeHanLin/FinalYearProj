@@ -185,7 +185,7 @@ pipeline {
                     """
 
                     echo "Deploying containers..."
-                    sh "docker compose -f ${CONTAINER_FILES_PATH}/docker-compose-prod-old.yml up -d"
+                    sh "docker compose -f ${CONTAINER_FILES_PATH}/docker-compose-prod-old.yml --project-name prod_old up -d"
                 }
             }
         }
@@ -347,7 +347,7 @@ stage('Gatekeeper for UAT Deployment') {
                     """
 
                     echo "Deploying NEW containers to Production..."
-                    sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose-prod-new.yml up -d"
+                    sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose-prod-new.yml --project-name prod_new up -d"
                 }
             }
         }
