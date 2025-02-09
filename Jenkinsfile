@@ -5,8 +5,10 @@ pipeline {
         SONAR_HOST = 'http://127.0.0.1:9000'
         SONAR_PROJECT_KEY = 'jenkin'
         SONARQUBE_SERVER_NAME = 'sonarserver'
-        DOCKER_WEB_IMAGE = 'apache-old-image'
-        DOCKER_DB_IMAGE = 'mysql-old-image'
+        DOCKER_WEB_IMAGE_NEW = 'apache-new-image'
+        DOCKER_DB_IMAGE_NEW = 'mysql-new-image'
+        DOCKER_WEB_IMAGE_OLD = 'apache-old-image'
+        DOCKER_DB_IMAGE_OLD = 'mysql-old-image'
         WEB_CONTAINER = 'apache-container'
         DB_CONTAINER = 'mysql-container'
         GIT_REPO = 'https://github.com/22018950-LeeHanLin/FinalYearProj.git'
@@ -51,7 +53,7 @@ pipeline {
             }
         }
 
-        stage('Gatekeeper for UAT Deployment') {
+        stage('Gatekeeper for old UAT Deployment') {
             steps {
                 script {
                     def UAT_DEPLOY_STATUS = input message: 'Proceed to UAT Build and Test?', ok: 'Proceed', parameters: [
@@ -62,12 +64,12 @@ pipeline {
             }
         }
 
-        stage('Build and Test in UAT') {
+        stage('Build and Test in old UAT') {
             when {
                 expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
             }
             parallel {
-                stage('Build Apache Image for UAT') {
+                stage('Build Apache Image for old UAT') {
                     steps {
                         script {
                             sh "docker build -t ${DOCKER_WEB_IMAGE}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile-uat-old.web ${CONTAINER_FILES_PATH}"
@@ -75,7 +77,7 @@ pipeline {
                         }
                     }
                 }
-                stage('Build MySQL Image for UAT') {
+                stage('Build MySQL Image for old UAT') {
                     steps {
                         script {
                             sh "docker build -t ${DOCKER_DB_IMAGE}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile-uat-old.db ${CONTAINER_FILES_PATH}"
@@ -86,7 +88,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to UAT') {
+        stage('Deploy to old UAT') {
             when {
                 expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
             }
@@ -105,6 +107,167 @@ pipeline {
         }
 
 
+        stage('Rollback for old UAT') {
+            when {
+                expression { env.UAT_DEPLOY_STATUS == 'Rollback' }
+            }
+            steps {
+                script {
+                    echo "Rollback initiated for UAT."
+                    sh "${CONTAINER_FILES_PATH}/rollback-uat.sh"
+                }
+            }
+        }
+
+       // stage('UAT CURL Test') {
+          //  when {
+            //    expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
+           // }
+          //  steps {
+            //    script {
+              //      def response = sh(script: "curl -Is http://localhost:8085/ | head -n 1", returnStdout: true).trim()
+                //    echo "UAT CURL Response: ${response}"
+                //    if (!response.contains('200 OK')) {
+                 //       error("UAT CURL test failed")
+                 //   }
+              //  }
+           // }
+      //  }
+
+        stage('Gatekeeper for old Production Deployment') {
+            steps {
+                script {
+                    def PROD_DEPLOY_STATUS = input message: 'Proceed to Deploy to Production?', ok: 'Proceed', parameters: [
+                        choice(name: 'PROD_DEPLOY_STATUS', choices: ['Deploy to Production', 'Rollback'], description: 'Deployment Status')
+                    ]
+                    env.PROD_DEPLOY_STATUS = PROD_DEPLOY_STATUS
+                }
+            }
+        }
+
+        stage('Build for old Production') {
+            when {
+                expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
+            }
+            parallel {
+                stage('Build Apache Image for old Production') {
+                    steps {
+                        script {
+                            sh "docker build -t ${DOCKER_WEB_IMAGE}-prod -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.web ${CONTAINER_FILES_PATH}"
+                            echo "Apache Production image built successfully."
+                        }
+                    }
+                }
+                stage('Build MySQL Image for old Production') {
+                    steps {
+                        script {
+                            sh "docker build -t ${DOCKER_DB_IMAGE}-prod -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.db ${CONTAINER_FILES_PATH}"
+                            echo "MySQL Production image built successfully."
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to old Production') {
+            when {
+                expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
+            }
+             steps {
+                script {
+                    echo "Stopping and removing any existing containers to avoid conflicts..."
+                    sh """
+                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} || echo 'No existing Apache container found'
+                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
+                    """
+
+                    echo "Deploying containers..."
+                    sh "docker compose -f ${CONTAINER_FILES_PATH}/docker-compose-prod-old.yml up -d"
+                }
+            }
+        }
+
+
+        stage('Rollback for old Production') {
+            when {
+                expression { env.PROD_DEPLOY_STATUS == 'Rollback' }
+            }
+            steps {
+                script {
+                    echo "Rollback initiated for Production."
+                    sh "${CONTAINER_FILES_PATH}/rollback-prod.sh"
+                }
+            }
+        }
+      //  stage('PROD CURL Test') {
+           // when {
+              //  expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
+          //  }
+           // steps {
+                //script {
+                   // def response = sh(script: "curl -Is http://localhost:8085/ | head -n 1", returnStdout: true).trim()
+                  //  echo "UAT CURL Response: ${response}"
+                   // if (!response.contains('200 OK')) {
+                     //   error("UAT CURL test failed")
+                   // }
+               // }
+           // }
+      //  }
+        
+stage('Gatekeeper for UAT Deployment') {
+            steps {
+                script {
+                    def UAT_DEPLOY_STATUS = input message: 'Proceed to UAT Build and Test?', ok: 'Proceed', parameters: [
+                        choice(name: 'UAT_DEPLOY_STATUS', choices: ['Proceed to UAT', 'Rollback'], description: 'Deployment Status')
+                    ]
+                    env.UAT_DEPLOY_STATUS = UAT_DEPLOY_STATUS
+                }
+            }
+        }
+
+        stage('Build and Test in UAT') {
+            when {
+                expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
+            }
+            parallel {
+                stage('Build Apache New Image for UAT') {
+                    steps {
+                        script {
+                            sh "docker build -t ${DOCKER_WEB_IMAGE_NEW}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile-uat-new.web ${CONTAINER_FILES_PATH}"
+                            echo "Apache NEW UAT image built successfully."
+                        }
+                    }
+                }
+                stage('Build MySQL New Image for UAT') {
+                    steps {
+                        script {
+                            sh "docker build -t ${DOCKER_DB_IMAGE_NEW}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile-uat-new.db ${CONTAINER_FILES_PATH}"
+                            echo "MySQL NEW UAT image built successfully."
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to UAT') {
+            when {
+                expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
+            }
+             steps {
+                script {
+                    echo "Stopping and removing any existing containers to avoid conflicts..."
+                    sh """
+                        docker ps -a | grep '${WEB_CONTAINER}' && docker stop ${WEB_CONTAINER} && docker rm ${WEB_CONTAINER} || echo 'No existing Apache container found'
+                        docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
+                    """
+
+                   echo "Deploying NEW containers to UAT..."
+                    sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose-uat-new.yml up -d"
+                }
+            }
+        }
+
+
         stage('Rollback for UAT') {
             when {
                 expression { env.UAT_DEPLOY_STATUS == 'Rollback' }
@@ -112,7 +275,7 @@ pipeline {
             steps {
                 script {
                     echo "Rollback initiated for UAT."
-                    sh "${CONTAINER_FILES_PATH}/rollback.sh"
+                    sh "${CONTAINER_FILES_PATH}/rollback-uat.sh"
                 }
             }
         }
@@ -148,19 +311,19 @@ pipeline {
                 expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
             }
             parallel {
-                stage('Build Apache Image for Production') {
+                stage('Build Apache New Image for Production') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_WEB_IMAGE}-prod -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.web ${CONTAINER_FILES_PATH}"
-                            echo "Apache Production image built successfully."
+                            sh "docker build -t ${DOCKER_WEB_IMAGE_NEW}-prod -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-new.web ${CONTAINER_FILES_PATH}"
+                            echo "Apache NEW Production image built successfully."
                         }
                     }
                 }
-                stage('Build MySQL Image for Production') {
+                stage('Build MySQL New Image for Production') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_DB_IMAGE}-prod -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.db ${CONTAINER_FILES_PATH}"
-                            echo "MySQL Production image built successfully."
+                            sh "docker build -t ${DOCKER_DB_IMAGE_NEW}-prod -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-new.db ${CONTAINER_FILES_PATH}"
+                            echo "MySQL NEW Production image built successfully."
                         }
                     }
                 }
@@ -179,8 +342,8 @@ pipeline {
                         docker ps -a | grep '${DB_CONTAINER}' && docker stop ${DB_CONTAINER} && docker rm ${DB_CONTAINER} || echo 'No existing MySQL container found'
                     """
 
-                    echo "Deploying containers..."
-                    sh "docker compose -f ${CONTAINER_FILES_PATH}/docker-compose-prod-old.yml up -d"
+                    echo "Deploying NEW containers to Production..."
+                    sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose-prod-new.yml up -d"
                 }
             }
         }
@@ -193,7 +356,7 @@ pipeline {
             steps {
                 script {
                     echo "Rollback initiated for Production."
-                    sh "${CONTAINER_FILES_PATH}/rollback.sh"
+                    sh "${CONTAINER_FILES_PATH}/rollback-prod.sh"
                 }
             }
         }
@@ -211,7 +374,6 @@ pipeline {
                // }
            // }
       //  }
-
         stage('Final Gatekeeper') {
             steps {
                 script {
