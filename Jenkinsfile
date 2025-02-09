@@ -105,7 +105,7 @@ pipeline {
                     """
 
                     echo "Deploying containers..."
-                    sh "docker compose -f ${CONTAINER_FILES_PATH}/docker-compose-uat-old.yml up -d"
+                    sh "docker compose -f ${CONTAINER_FILES_PATH}/docker-compose-uat-old.yml --project-name uat_old up -d"
                 }
             }
         }
