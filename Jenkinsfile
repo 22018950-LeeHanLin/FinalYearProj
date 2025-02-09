@@ -68,6 +68,24 @@ pipeline {
             }
         }
 
+        stages {
+        stage('Clean Up Docker Environment') {
+            steps {
+                script {
+                    echo "Cleaning up all Docker containers, images, networks, and volumes..."
+                    sh '''
+                        docker stop $(docker ps -aq) || true
+                        docker rm $(docker ps -aq) || true
+                        docker rmi -f $(docker images -aq) || true
+                        docker network prune -f || true
+                        docker volume prune -f || true
+                    '''
+                    echo "Docker environment cleanup completed."
+                }
+            }
+        }
+                    
+
         stage('Build and Test in old UAT') {
             when {
                 expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
