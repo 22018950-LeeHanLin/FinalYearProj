@@ -68,7 +68,7 @@ pipeline {
             }
         }
 
-        stages {
+    
         stage('Clean Up Docker Environment') {
             steps {
                 script {
@@ -84,7 +84,7 @@ pipeline {
                 }
             }
         }
-        }       
+        
 
         stage('Build and Test in old UAT') {
             when {
