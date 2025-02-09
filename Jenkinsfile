@@ -158,7 +158,6 @@ pipeline {
                 }
             }
         }
-    }
 
         stage('Gatekeeper for old Production Deployment') {
             steps {
