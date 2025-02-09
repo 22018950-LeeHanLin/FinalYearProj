@@ -32,6 +32,7 @@ pipeline {
                 }
             }
         }
+    }
 
         stage('Checkout Code') {
             steps {
@@ -421,6 +422,7 @@ stage('Gatekeeper for UAT Deployment') {
                 }
             }
         }
+    }
     
     post {
         success {
