@@ -5,12 +5,12 @@ pipeline {
         SONAR_HOST = 'http://127.0.0.1:9000'
         SONAR_PROJECT_KEY = 'jenkin'
         SONARQUBE_SERVER_NAME = 'sonarserver'
-        DOCKER_WEB_IMAGE = 'apache-image'
-        DOCKER_DB_IMAGE = 'mysql-image'
+        DOCKER_WEB_IMAGE = 'apache-old-image'
+        DOCKER_DB_IMAGE = 'mysql-old-image'
         WEB_CONTAINER = 'apache-container'
         DB_CONTAINER = 'mysql-container'
         GIT_REPO = 'https://github.com/22018950-LeeHanLin/FinalYearProj.git'
-        CONTAINER_FILES_PATH = '/home/fypuser/fyp/Jingyi/container-files'
+        CONTAINER_FILES_PATH = '/home/fypuser/fyp/Hari/webdeploy'
     }
 
     stages {
@@ -99,7 +99,7 @@ pipeline {
                     """
 
                     echo "Deploying containers..."
-                    sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d"
+                    sh "docker compose -f ${CONTAINER_FILES_PATH}/docker-compose-uat-old.yml up -d"
                 }
             }
         }
@@ -180,7 +180,7 @@ pipeline {
                     """
 
                     echo "Deploying containers..."
-                    sh "docker-compose -f ${CONTAINER_FILES_PATH}/docker-compose1.yml up -d"
+                    sh "docker compose -f ${CONTAINER_FILES_PATH}/docker-compose-prod-old.yml up -d"
                 }
             }
         }
