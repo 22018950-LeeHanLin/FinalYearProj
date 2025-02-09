@@ -84,7 +84,7 @@ pipeline {
                 }
             }
         }
-                    
+        }       
 
         stage('Build and Test in old UAT') {
             when {
