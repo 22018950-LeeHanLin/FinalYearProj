@@ -421,8 +421,7 @@ stage('Gatekeeper for UAT Deployment') {
                 }
             }
         }
-    }
-
+    
     post {
         success {
             echo 'Pipeline executed successfully!'
@@ -431,4 +430,4 @@ stage('Gatekeeper for UAT Deployment') {
             echo 'Pipeline failed. Check logs for details.'
         }
     }
-
+    }
