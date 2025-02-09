@@ -141,20 +141,25 @@ pipeline {
             }
         }
 
-       // stage('UAT CURL Test') {
-          //  when {
-            //    expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
-           // }
-          //  steps {
-            //    script {
-              //      def response = sh(script: "curl -Is http://localhost:8085/ | head -n 1", returnStdout: true).trim()
-                //    echo "UAT CURL Response: ${response}"
-                //    if (!response.contains('200 OK')) {
-                 //       error("UAT CURL test failed")
-                 //   }
-              //  }
-           // }
-      //  }
+       stages {
+        stage('UAT CURL Test') {
+            when {
+                expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
+            }
+            steps {
+                script {
+                    def ports = [8081, 8082, 8087, 8088]
+                    ports.each { port ->
+                        def response = sh(script: "curl -Is http://localhost:${port}/ | head -n 1", returnStdout: true).trim()
+                        echo "UAT CURL Response for port ${port}: ${response}"
+                        if (!response.contains('200 OK')) {
+                            error("UAT CURL test failed on port ${port}")
+                        }
+                    }
+                }
+            }
+        }
+    }
 
         stage('Gatekeeper for old Production Deployment') {
             steps {
