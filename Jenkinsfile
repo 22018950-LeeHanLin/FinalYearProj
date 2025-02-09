@@ -142,23 +142,21 @@ pipeline {
             }
         }
 
-        stage('UAT CURL Test') {
+        stage('old UAT CURL Test') {
             when {
                 expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
             }
             steps {
                 script {
-                    def ports = [8081, 8082, 8087, 8088]
-                    ports.each { port ->
-                        def response = sh(script: "curl -Is http://localhost:${port}/ | head -n 1", returnStdout: true).trim()
-                        echo "UAT CURL Response for port ${port}: ${response}"
-                        if (!response.contains('200 OK')) {
-                            error("UAT CURL test failed on port ${port}")
-                        }
+                    def response = sh(script: "curl -Is http://localhost:8081 | head -n 1", returnStdout: true).trim()
+                    echo "UAT CURL Response: ${response}"
+                    if (!response.contains('200 OK')) {
+                        error("UAT CURL test failed")
                     }
                 }
             }
         }
+
 
         stage('Gatekeeper for old Production Deployment') {
             steps {
@@ -224,35 +222,35 @@ pipeline {
                 }
             }
         }
-      //  stage('PROD CURL Test') {
-           // when {
-              //  expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
-          //  }
-           // steps {
-                //script {
-                   // def response = sh(script: "curl -Is http://localhost:8085/ | head -n 1", returnStdout: true).trim()
-                  //  echo "UAT CURL Response: ${response}"
-                   // if (!response.contains('200 OK')) {
-                     //   error("UAT CURL test failed")
-                   // }
-               // }
-           // }
-      //  }
+        stage('old PROD CURL Test') {
+            when {
+               expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
+           }
+            steps {
+                script {
+                    def response = sh(script: "curl -Is http://localhost:8082/ | head -n 1", returnStdout: true).trim()
+                   echo "UAT CURL Response: ${response}"
+                    if (!response.contains('200 OK')) {
+                       error("UAT CURL test failed")
+                    }
+                }
+            }
+       }
         
-stage('Gatekeeper for UAT Deployment') {
+stage('Gatekeeper for new UAT Deployment') {
             steps {
                 script {
                     def UAT_DEPLOY_STATUS = input message: 'Proceed to UAT Build and Test?', ok: 'Proceed', parameters: [
-                        choice(name: 'UAT_DEPLOY_STATUS', choices: ['Proceed to UAT', 'Rollback'], description: 'Deployment Status')
+                        choice(name: 'UAT_DEPLOY_STATUS', choices: ['Proceed to  new UAT', 'Rollback'], description: 'Deployment Status')
                     ]
                     env.UAT_DEPLOY_STATUS = UAT_DEPLOY_STATUS
                 }
             }
         }
 
-        stage('Build and Test in UAT') {
+        stage('Build and Test in new UAT') {
             when {
-                expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
+                expression { env.UAT_DEPLOY_STATUS == 'Proceed to new UAT' }
             }
             parallel {
                 stage('Build Apache New Image for UAT') {
@@ -274,9 +272,9 @@ stage('Gatekeeper for UAT Deployment') {
             }
         }
 
-        stage('Deploy to UAT') {
+        stage('Deploy to new UAT') {
             when {
-                expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
+                expression { env.UAT_DEPLOY_STATUS == 'Proceed to new UAT' }
             }
              steps {
                 script {
@@ -293,7 +291,7 @@ stage('Gatekeeper for UAT Deployment') {
         }
 
 
-        stage('Rollback for UAT') {
+        stage('Rollback for new UAT') {
             when {
                 expression { env.UAT_DEPLOY_STATUS == 'Rollback' }
             }
@@ -305,35 +303,35 @@ stage('Gatekeeper for UAT Deployment') {
             }
         }
 
-       // stage('UAT CURL Test') {
-          //  when {
-            //    expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
-           // }
-          //  steps {
-            //    script {
-              //      def response = sh(script: "curl -Is http://localhost:8085/ | head -n 1", returnStdout: true).trim()
-                //    echo "UAT CURL Response: ${response}"
-                //    if (!response.contains('200 OK')) {
-                 //       error("UAT CURL test failed")
-                 //   }
-              //  }
-           // }
-      //  }
+       stage('new UAT CURL Test') {
+          when {
+               expression { env.UAT_DEPLOY_STATUS == 'Proceed to new UAT' }
+           }
+           steps {
+             script {
+                   def response = sh(script: "curl -Is http://localhost:8087/ | head -n 1", returnStdout: true).trim()
+                    echo "UAT CURL Response: ${response}"
+                    if (!response.contains('200 OK')) {
+                        error("UAT CURL test failed")
+                   }
+                }
+            }
+        }
 
-        stage('Gatekeeper for Production Deployment') {
+        stage('Gatekeeper for new Production Deployment') {
             steps {
                 script {
                     def PROD_DEPLOY_STATUS = input message: 'Proceed to Deploy to Production?', ok: 'Proceed', parameters: [
-                        choice(name: 'PROD_DEPLOY_STATUS', choices: ['Deploy to Production', 'Rollback'], description: 'Deployment Status')
+                        choice(name: 'PROD_DEPLOY_STATUS', choices: ['Deploy to new Production', 'Rollback'], description: 'Deployment Status')
                     ]
                     env.PROD_DEPLOY_STATUS = PROD_DEPLOY_STATUS
                 }
             }
         }
 
-        stage('Build for Production') {
+        stage('Build for new Production') {
             when {
-                expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
+                expression { env.PROD_DEPLOY_STATUS == 'Deploy to new Production' }
             }
             parallel {
                 stage('Build Apache New Image for Production') {
@@ -356,9 +354,9 @@ stage('Gatekeeper for UAT Deployment') {
             }
         }
 
-        stage('Deploy to Production') {
+        stage('Deploy to new Production') {
             when {
-                expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
+                expression { env.PROD_DEPLOY_STATUS == 'Deploy to new Production' }
             }
              steps {
                 script {
@@ -375,7 +373,7 @@ stage('Gatekeeper for UAT Deployment') {
         }
 
 
-        stage('Rollback for Production') {
+        stage('Rollback for new Production') {
             when {
                 expression { env.PROD_DEPLOY_STATUS == 'Rollback' }
             }
