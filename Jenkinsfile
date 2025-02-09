@@ -70,7 +70,7 @@ pipeline {
                 stage('Build Apache Image for UAT') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_WEB_IMAGE}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
+                            sh "docker build -t ${DOCKER_WEB_IMAGE}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile-uat-old.web ${CONTAINER_FILES_PATH}"
                             echo "Apache UAT image built successfully."
                         }
                     }
@@ -78,7 +78,7 @@ pipeline {
                 stage('Build MySQL Image for UAT') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_DB_IMAGE}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
+                            sh "docker build -t ${DOCKER_DB_IMAGE}-uat -f ${CONTAINER_FILES_PATH}/Dockerfile-uat-old.db ${CONTAINER_FILES_PATH}"
                             echo "MySQL UAT image built successfully."
                         }
                     }
@@ -151,7 +151,7 @@ pipeline {
                 stage('Build Apache Image for Production') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_WEB_IMAGE}-prod -f ${CONTAINER_FILES_PATH}/Dockerfile.web ${CONTAINER_FILES_PATH}"
+                            sh "docker build -t ${DOCKER_WEB_IMAGE}-prod -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.web ${CONTAINER_FILES_PATH}"
                             echo "Apache Production image built successfully."
                         }
                     }
@@ -159,7 +159,7 @@ pipeline {
                 stage('Build MySQL Image for Production') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_DB_IMAGE}-prod -f ${CONTAINER_FILES_PATH}/Dockerfile.db ${CONTAINER_FILES_PATH}"
+                            sh "docker build -t ${DOCKER_DB_IMAGE}-prod -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.db ${CONTAINER_FILES_PATH}"
                             echo "MySQL Production image built successfully."
                         }
                     }
