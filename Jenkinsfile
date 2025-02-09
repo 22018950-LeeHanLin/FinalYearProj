@@ -9,7 +9,7 @@ pipeline {
         DOCKER_DB_IMAGE_UAT_NEW = 'mysql-uat-new-image'
         DOCKER_WEB_IMAGE_UAT_OLD = 'apache-uat-old-image'
         DOCKER_DB_IMAGE_UAT_OLD = 'mysql-uat-old-image'
-        DOCKER_WEB_IMAGE_PPRD_NEW= 'apache-prod-new-image'
+        DOCKER_WEB_IMAGE_PROD_NEW= 'apache-prod-new-image'
         DOCKER_DB_IMAGE_PROD_NEW ='mysql-prod-new-image'
         DOCKER_WEB_IMAGE_PROD_OLD ='apache-prod-old-image'
         DOCKER_DB_IMAGE_PROD_OLD ='mysql-prod-old-image' 
@@ -317,7 +317,7 @@ stage('Gatekeeper for UAT Deployment') {
                 stage('Build Apache New Image for Production') {
                     steps {
                         script {
-                            sh "docker build -t ${DOCKER_WEB_IMAGE_PROD_NEW} -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-new.web ${CONTAINER_FILES_PATH}"
+                            sh "docker build -t ${DOCKER_WEB_IMAGE_PPRD_NEW} -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-new.web ${CONTAINER_FILES_PATH}"
                             echo "Apache NEW Production image built successfully."
                         }
                     }
