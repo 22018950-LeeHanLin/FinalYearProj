@@ -416,7 +416,7 @@ stage('Gatekeeper for new UAT Deployment') {
             steps {
                 script {
                     echo "Rollback initiated."
-                    sh "${CONTAINER_FILES_PATH}/rollback.sh"
+                    sh "${CONTAINER_FILES_PATH}/rollback-prod.sh"
                 }
             }
         }
