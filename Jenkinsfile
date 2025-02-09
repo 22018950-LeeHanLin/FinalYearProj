@@ -120,7 +120,7 @@ pipeline {
        // stage('UAT CURL Test') {
           //  when {
             //    expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
-            }
+           // }
           //  steps {
             //    script {
               //      def response = sh(script: "curl -Is http://localhost:8085/ | head -n 1", returnStdout: true).trim()
