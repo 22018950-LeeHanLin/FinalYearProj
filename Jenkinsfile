@@ -141,7 +141,6 @@ pipeline {
             }
         }
 
-       stages {
         stage('UAT CURL Test') {
             when {
                 expression { env.UAT_DEPLOY_STATUS == 'Proceed to UAT' }
