@@ -1,0 +1,3 @@
+tan
+cos
+angle
