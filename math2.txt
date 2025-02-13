@@ -1,3 +1,0 @@
-tan
-cos
-angle
