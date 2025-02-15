@@ -182,15 +182,15 @@ pipeline {
                        // }
                     //}
                // }
-                stage('Build MySQL Image for old Production') {
-                    steps {
-                        script {
-                           sh "docker build -t ${DOCKER_DB_IMAGE_PROD_OLD} -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.db ${CONTAINER_FILES_PATH}"
-                        }
-                    }
-                }
-            }
-        }
+                //stage('Build MySQL Image for old Production') {
+                  //  steps {
+                    //    script {
+                      //     sh "docker build -t ${DOCKER_DB_IMAGE_PROD_OLD} -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.db ${CONTAINER_FILES_PATH}"
+                        //}
+                    //}
+                //}
+            //}
+        //}
 
         stage('Deploy to old Production') {
             when {
