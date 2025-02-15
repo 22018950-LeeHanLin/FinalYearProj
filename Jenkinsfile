@@ -169,28 +169,28 @@ pipeline {
             }
         }
 
-        // stage('Build for old Production') {
-           // when {
-             //   expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
-            //}
-            //parallel {
-              //  stage('Build Apache Image for old Production') {
-                //    steps {
-                  //      script {
-                    //        sh "docker build -t ${DOCKER_WEB_IMAGE_PROD_OLD} -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.web ${CONTAINER_FILES_PATH}"
-                      //      echo "Apache Production image built successfully."
-                       // }
-                    //}
-               // }
-                //stage('Build MySQL Image for old Production') {
-                  //  steps {
-                    //    script {
-                      //     sh "docker build -t ${DOCKER_DB_IMAGE_PROD_OLD} -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.db ${CONTAINER_FILES_PATH}"
-                        //}
-                    //}
-                //}
-            //}
-        //}
+        stage('Build for old Production') {
+           when {
+               expression { env.PROD_DEPLOY_STATUS == 'Deploy to Production' }
+          }
+            parallel {
+              stage('Build Apache Image for old Production') {
+                   steps {
+                       script {
+                           sh "docker build -t ${DOCKER_WEB_IMAGE_PROD_OLD} -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.web ${CONTAINER_FILES_PATH}"
+                           echo "Apache Production image built successfully."
+                        }
+                }
+             }
+                stage('Build MySQL Image for old Production') {
+                   steps {
+                       script {
+                          sh "docker build -t ${DOCKER_DB_IMAGE_PROD_OLD} -f ${CONTAINER_FILES_PATH}/Dockerfile-prod-old.db ${CONTAINER_FILES_PATH}"
+                        }
+                    }
+                       }
+            }}
+        
 
         stage('Deploy to old Production') {
             when {
